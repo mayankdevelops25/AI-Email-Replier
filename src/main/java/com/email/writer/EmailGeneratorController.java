@@ -20,7 +20,7 @@ public class EmailGeneratorController {
     }
 
     @GetMapping("/replies")
-    public ResponseEntity<List<EmailReply>> getAllReplies(){
+    public ResponseEntity<List<EmailReply>> getAllReplies() {
         List<EmailReply> replies = emailGeneratorService.getAllReplies();
         return ResponseEntity.ok(replies);
     }

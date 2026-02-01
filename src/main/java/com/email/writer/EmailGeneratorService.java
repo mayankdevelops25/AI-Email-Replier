@@ -3,6 +3,8 @@ package com.email.writer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Service
 public class EmailGeneratorService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailGeneratorService.class);
 
     private final WebClient webClient;
     private final String apiKey;
@@ -60,11 +64,15 @@ public class EmailGeneratorService {
         String generatedReply = extractResponseContent(response);
 
         //Save to database
-        EmailReply emailReply = new EmailReply();
-        emailReply.setOriginalEmail(emailRequest.getEmailContent());
-        emailReply.setTone(emailRequest.getTone());
-        emailReply.setGeneratedReply(generatedReply);
-        emailReplyRepository.save(emailReply);
+        try {
+            EmailReply emailReply = new EmailReply();
+            emailReply.setOriginalEmail(emailRequest.getEmailContent());
+            emailReply.setTone(emailRequest.getTone());
+            emailReply.setGeneratedReply(generatedReply);
+            emailReplyRepository.save(emailReply);
+        } catch (Exception e) {
+            logger.error("Failed to save email reply to database", e);
+        }
 
         return generatedReply;
     }
