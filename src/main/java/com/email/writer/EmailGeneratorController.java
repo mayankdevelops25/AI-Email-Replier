@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/email")
 @AllArgsConstructor
@@ -15,6 +17,12 @@ public class EmailGeneratorController {
     public ResponseEntity<String> generateEmail(@RequestBody EmailRequest emailRequest){
         String response = emailGeneratorService.generateEmailReply(emailRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/replies")
+    public ResponseEntity<List<EmailReply>> getAllReplies(){
+        List<EmailReply> replies = emailGeneratorService.getAllReplies();
+        return ResponseEntity.ok(replies);
     }
 
 }

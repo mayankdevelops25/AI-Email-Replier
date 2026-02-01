@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# H2 Database files
+data/
+*.db
+*.trace.db
+*.lock.db
+
+# Maven build
+target/
