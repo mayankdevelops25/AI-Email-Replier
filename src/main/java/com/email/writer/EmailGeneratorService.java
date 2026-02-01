@@ -3,22 +3,31 @@ package com.email.writer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
+
 @Service
 public class EmailGeneratorService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmailGeneratorService.class);
+
     private final WebClient webClient;
     private final String apiKey;
+    private final EmailReplyRepository emailReplyRepository;
 
     public EmailGeneratorService(WebClient.Builder webClientBuilder,
                                  @Value("${gemini.api.url}") String baseUrl,
-                                 @Value("${gemini.api.key}") String geminiApiKey) {
+                                 @Value("${gemini.api.key}") String geminiApiKey,
+                                 EmailReplyRepository emailReplyRepository) {
         this.apiKey = geminiApiKey;
         this.webClient = webClientBuilder.baseUrl(baseUrl)
                 .build();
+        this.emailReplyRepository = emailReplyRepository;
     }
 
     public String generateEmailReply(EmailRequest emailRequest) {
@@ -52,7 +61,24 @@ public class EmailGeneratorService {
                 .bodyToMono(String.class)
                 .block();
         //Extract Response
-        return extractResponseContent(response);
+        String generatedReply = extractResponseContent(response);
+
+        //Save to database
+        try {
+            EmailReply emailReply = new EmailReply();
+            emailReply.setOriginalEmail(emailRequest.getEmailContent());
+            emailReply.setTone(emailRequest.getTone());
+            emailReply.setGeneratedReply(generatedReply);
+            emailReplyRepository.save(emailReply);
+        } catch (Exception e) {
+            logger.error("Failed to save email reply to database", e);
+        }
+
+        return generatedReply;
+    }
+
+    public List<EmailReply> getAllReplies() {
+        return emailReplyRepository.findAllByOrderByCreatedAtDesc();
     }
 
     private String extractResponseContent(String response) {
